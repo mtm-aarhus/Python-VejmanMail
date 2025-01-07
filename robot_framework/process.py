@@ -141,7 +141,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         msg['Subject'] = subject
         msg.set_content("Please enable HTML to view this message.")
         msg.add_alternative(body, subtype='html')
-        msg['Bcc'] = config.ERROR_EMAIL.value
+        msg['Bcc'] = config.ERROR_EMAIL
 
         # Send the email using SMTP
         try:
