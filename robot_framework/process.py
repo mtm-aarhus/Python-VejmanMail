@@ -136,12 +136,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         # Create the email message
         msg = EmailMessage()
-        msg['To'] = orchestrator_connection.get_constant("balas")#orchestrator_connection.get_constant("VejArealMail")
+        msg['To'] = orchestrator_connection.get_constant("balas").value #orchestrator_connection.get_constant("VejArealMail").value
         msg['From'] = config.SCREENSHOT_SENDER
         msg['Subject'] = subject
         msg.set_content("Please enable HTML to view this message.")
         msg.add_alternative(body, subtype='html')
-        msg['Bcc'] = config.ERROR_EMAIL
+        msg['Bcc'] = config.ERROR_EMAIL.value
 
         # Send the email using SMTP
         try:
