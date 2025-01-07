@@ -1,4 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+from OpenOrchestrator.database.queues import QueueElement
 from email.message import EmailMessage
 import smtplib
 import requests
@@ -6,7 +7,7 @@ import os
 from datetime import datetime, timedelta 
 
 
-def process(orchestrator_connection: OrchestratorConnection) -> None:
+def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
 
     send_to_fællesmail = True
