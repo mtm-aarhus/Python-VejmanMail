@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta 
 
 
-def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
+def process(orchestrator_connection: OrchestratorConnection) -> None:
     orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
 
     send_to_fællesmail = True
