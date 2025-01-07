@@ -18,12 +18,8 @@ classifiers = [
 dependencies = [
     "OpenOrchestrator == 1.*",
     "Pillow == 10.*",
-    "pandas==2.2.3",
     "requests==2.32.3",
-    "Office365-REST-Python-Client==2.5.14",
-    "selenium==4.27.1",
-    "xlrd==1.2.0",
-    "pywin32 == 308",
+    "Office365-REST-Python-Client==2.5.14"
 
 ]
 
