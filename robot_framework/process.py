@@ -5,10 +5,12 @@ import smtplib
 import requests
 import os
 from datetime import datetime, timedelta 
+from robot_framework import config
 
 
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
+    Mailmodtager = orchestrator_connection.get_constant("balas")
 
     send_to_fællesmail = True
 
@@ -135,15 +137,15 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         # Create the email message
         msg = EmailMessage()
         msg['To'] = orchestrator_connection.get_constant("balas")#orchestrator_connection.get_constant("VejArealMail")
-        msg['From'] = SCREENSHOT_SENDER
+        msg['From'] = config.SCREENSHOT_SENDER
         msg['Subject'] = subject
         msg.set_content("Please enable HTML to view this message.")
         msg.add_alternative(body, subtype='html')
-        msg['Bcc'] = ERROR_EMAIL
+        msg['Bcc'] = config.ERROR_EMAIL
 
         # Send the email using SMTP
         try:
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
+            with smtplib.SMTP(config.SMTP_SERVER, config.SMTP_PORT) as smtp:
                 smtp.send_message(msg)
                 orchestrator_connection.log_info("VejmanMail sent")
         except Exception as e:
