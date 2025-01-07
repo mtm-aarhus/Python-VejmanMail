@@ -1,6 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from email.message import EmailMessage
-from config import SMTP_SERVER, SMTP_PORT, SCREENSHOT_SENDER, ERROR_EMAIL
 import smtplib
 import requests
 import os
