@@ -1,4 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+from OpenOrchestrator.database.queues import QueueElement
 from email.message import EmailMessage
 import smtplib
 import requests
