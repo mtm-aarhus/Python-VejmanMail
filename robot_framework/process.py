@@ -1,26 +1,24 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
-from OpenOrchestrator.database.queues import QueueElement
 from email.message import EmailMessage
+from config import SMTP_SERVER, SMTP_PORT, SCREENSHOT_SENDER, ERROR_EMAIL
 import smtplib
 import requests
 import os
 from datetime import datetime, timedelta 
-from robot_framework import config
+
 
 
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
-    orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
-    Mailmodtager = orchestrator_connection.get_constant("balas")
+    
+    # Initialize Orchestrator Connection
+    orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'), os.getenv('OpenOrchestratorKey'), None)
 
-    send_to_fællesmail = True
+    # Get credentials
+    token = orchestrator_connection.get_credential("VejmanToken").password
 
-    # Mail til sagsbehandler
-    orchestrator_connection.log_info("Running VejmanMail")
-
-    # Initialize variables
+    # Date Variables
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     today = datetime.now().strftime("%Y-%m-%d")
-    token = orchestrator_connection.get_credential("VejmanToken").password
 
     # URLs and headers
     urls = [
@@ -30,124 +28,88 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     ]
     headers = ["Udløbne tilladelser", "Færdigmeldte tilladelser", "Nye tilladelser"]
 
+    # Custom Headers for Table (Order is enforced here)
+    custom_headers = [
+        ("case_id", "Sag"),
+        ("initials", "Behandler"),
+        ("state", "Status"),
+        ("type", "Ansøgning"),
+        ("connected_case", "Relateret"),
+        ("end_date", "Slutdato"),
+        ("start_date", "Startdato"),
+        ("applicant", "Ansøger"),
+        ("rovm_equipment_type", "Udstyr"),
+        ("applicant_folder_number", "Sagsmappenr"),
+        ("authority_reference_number", "Kommentar"),
+        ("street_name", "Vejnavn"),
+    ]
+
+    # Generate HTML Table
     html_table = ""
 
-    # Loop through each URL
     for idx, url in enumerate(urls):
-        print(f"Henter {headers[idx]}")
         response = requests.get(url)
         response.raise_for_status()
-        json_object = response.json()
+        cases = response.json().get("cases", [])
 
-        # Extract cases
-        cases = json_object.get("cases", [])
         html_table += f"<h2>{headers[idx]}</h2>"
 
         if not cases:
             html_table += "<p>Ingen tilladelser</p>"
             continue
 
-        # Filter cases based on initials
-        filtered_cases = [
-            case for case in cases
-            if case.get("initials") in ["MAMASA", "LERV"]
-        ]
+        # Filter cases by initials
+        filtered_cases = [case for case in cases if case.get("initials") in ["MAMASA", "LERV"]]
 
         if not filtered_cases:
-            html_table += "<p>Ingen tilladelser</p>"
+            html_table += f"<p>Ingen tilladelser for initials: ['MAMASA', 'LERV']</p>"
             continue
 
-        # Prepare table headers
-        columns_to_exclude = {"geometrycount", "manualpinpoint", "ispinpointed", "message_state", "webgtno", "case_number"}
-        custom_headers = {
-            "case_id": "Sag",
-            "initials": "Behandler",
-            "state": "Status",
-            "type": "Ansøgning",
-            "end_date": "Slutdato",
-            "applicant_folder_number": "Sagsmappenr",
-            "start_date": "Startdato",
-            "applicant": "Ansøger",
-            "rovm_equipment_type": "Udstyr",
-            "authority_reference_number": "Kommentar",
-            "street_name": "Vejnavn",
-            "connected_case": "Relateret",
-        }
-
-        # Temporary table to store rows
+        # Start building the table
         temp_table = "<table border='1'><tr>"
-        for key in filtered_cases[0]:
-            if key not in columns_to_exclude:
-                header = custom_headers.get(key, key)
-                temp_table += f"<th>{header}</th>"
+        for _, header in custom_headers:
+            temp_table += f"<th>{header}</th>"
         temp_table += "</tr>"
 
-        # Populate table rows
-        table_has_rows = False
+        # Populate rows
         for case in filtered_cases:
             case_id = case.get("case_id")
             if not case_id:
                 continue
 
-            # Fetch detailed case information
-            print(f"Henter info om {case_id}")
-            case_response = requests.get(f"https://vejman.vd.dk/permissions/getcase?caseid={case_id}&token={token}")
-            case_response.raise_for_status()
-            case_details = case_response.json().get("data", {})
+            # Fetch case details
+            case_details = requests.get(f"https://vejman.vd.dk/permissions/getcase?caseid={case_id}&token={token}").json().get("data", {})
+            case["start_date"] = case_details.get("start_date", case.get("start_date"))
+            case["end_date"] = case_details.get("end_date", case.get("end_date"))
 
-            # Update start_date and end_date
-            case["start_date"] = case_details.get("start_date")
-            case["end_date"] = case_details.get("end_date")
-
-            # Parse and format dates
-            end_date = datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S")
-            start_date = datetime.strptime(case["start_date"], "%d-%m-%Y %H:%M:%S")
-
-            should_include_case = True
-            if headers[idx] == "Udløbne tilladelser":
-                should_include_case = (
-                    (end_date.date() == datetime.now().date() and end_date.hour < 8) or
-                    (end_date.date() == (datetime.now() - timedelta(days=1)).date() and end_date.hour >= 8)
-                )
-
-            if should_include_case:
-                table_has_rows = True
-                temp_table += "<tr>"
-                for key, value in case.items():
-                    if key not in columns_to_exclude:
-                        if key == "case_id":
-                            case_number = case.get("case_number", "")
-                            temp_table += f"<td><a href='https://vejman.vd.dk/permissions/update.jsp?caseid={value}'>{case_number}</a></td>"
-                        else:
-                            temp_table += f"<td>{value}</td>"
-                temp_table += "</tr>"
+            # Build the row
+            temp_table += "<tr>"
+            for key, _ in custom_headers:
+                value = case.get(key, "")
+                if value is None:  # If the value is None, leave it blank
+                    value = ""
+                if key == "case_id":
+                    case_number = case.get("case_number", "")
+                    temp_table += f"<td><a href='https://vejman.vd.dk/permissions/update.jsp?caseid={value}'>{case_number}</a></td>"
+                else:
+                    temp_table += f"<td>{value}</td>"
+            temp_table += "</tr>"
         temp_table += "</table>"
+        html_table += temp_table
 
-        # Append the table only if it has rows
-        if table_has_rows:
-            html_table += temp_table
-        else:
-            html_table += "<p>Ingen tilladelser</p>"
-
-    # Output the HTML
-    if send_to_fællesmail == True:
-        subject = "Daglig liste over tilladelser i Vejman"
-        body = html_table
-
-        # Create the email message
+    # Send Email
+    if html_table.strip():
         msg = EmailMessage()
-        msg['To'] = orchestrator_connection.get_constant("balas").value #orchestrator_connection.get_constant("VejArealMail").value
-        msg['From'] = config.SCREENSHOT_SENDER
-        msg['Subject'] = subject
+        msg['To'] = orchestrator_connection.get_constant("balas").value
+        msg['From'] = SCREENSHOT_SENDER
+        msg['Subject'] = "Daglig liste over tilladelser i Vejman"
         msg.set_content("Please enable HTML to view this message.")
-        msg.add_alternative(body, subtype='html')
-        msg['Bcc'] = config.ERROR_EMAIL
+        msg.add_alternative(html_table, subtype='html')
+        msg['Bcc'] = ERROR_EMAIL
 
-        # Send the email using SMTP
         try:
-            with smtplib.SMTP(config.SMTP_SERVER, config.SMTP_PORT) as smtp:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
                 smtp.send_message(msg)
-                orchestrator_connection.log_info("VejmanMail sent")
+                orchestrator_connection.log_info("Email sent successfully.")
         except Exception as e:
-            print(f"Failed to send email: {e}")
-        
+            orchestrator_connection.log_error(f"Failed to send email: {e}")
