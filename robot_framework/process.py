@@ -96,16 +96,21 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             temp_table += "</tr>"
         temp_table += "</table>"
         html_table += temp_table
+    
+    SMTP_SERVER = "smtp.adm.aarhuskommune.dk"
+    SMTP_PORT = 25
+    SCREENSHOT_SENDER = "vejmanmail@aarhus.dk"
 
+    balas = orchestrator_connection.get_constant("balas").value
     # Send Email
     if html_table.strip():
         msg = EmailMessage()
-        msg['To'] = orchestrator_connection.get_constant("balas").value
+        msg['To'] = balas
         msg['From'] = SCREENSHOT_SENDER
         msg['Subject'] = "Daglig liste over tilladelser i Vejman"
         msg.set_content("Please enable HTML to view this message.")
         msg.add_alternative(html_table, subtype='html')
-        msg['Bcc'] = ERROR_EMAIL
+        msg['Bcc'] = balas
 
         try:
             with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
