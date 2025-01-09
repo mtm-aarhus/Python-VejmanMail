@@ -43,9 +43,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         ("authority_reference_number", "Kommentar"),
         ("street_name", "Vejnavn"),
     ]
-
     # Generate HTML Table
     html_table = ""
+
+    now = datetime.now()
+    yesterday = now - timedelta(days=1)
 
     for idx, url in enumerate(urls):
         response = requests.get(url)
@@ -60,6 +62,25 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         # Filter cases by initials
         filtered_cases = [case for case in cases if case.get("initials") in ["MAMASA", "LERV"]]
+
+        # Apply time constraints for "Udløbne tilladelser"
+        if headers[idx] == "Udløbne tilladelser":
+            filtered_cases = [
+                case for case in filtered_cases
+                if (
+                    "end_date" in case and
+                    (
+                        # Yesterday after 8 AM
+                        (datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").date() == yesterday.date() and
+                        datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").hour >= 8) or
+                        # Today before 8 AM
+                        (datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").date() == now.date() and
+                        datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").hour < 8 and
+                        not (datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").hour == 0 and
+                            datetime.strptime(case["end_date"], "%d-%m-%Y %H:%M:%S").minute == 0))
+                    )
+                )
+            ]
 
         if not filtered_cases:
             html_table += f"<p>Ingen tilladelser for initials: ['MAMASA', 'LERV']</p>"
@@ -96,7 +117,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             temp_table += "</tr>"
         temp_table += "</table>"
         html_table += temp_table
-    
     SMTP_SERVER = "smtp.adm.aarhuskommune.dk"
     SMTP_PORT = 25
     SCREENSHOT_SENDER = "vejmanmail@aarhus.dk"
