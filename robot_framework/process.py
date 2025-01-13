@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
         
-        # Initialize Orchestrator Connection
-    orchestrator_connection = OrchestratorConnection("VejmanMail", os.getenv('OpenOrchestratorSQL'), os.getenv('OpenOrchestratorKey'), None)
     orchestrator_connection.log_info("Getting token")
 
     # Get credentials
