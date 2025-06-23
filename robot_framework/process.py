@@ -160,9 +160,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     SMTP_PORT = 25
     SCREENSHOT_SENDER = "vejmanmail@aarhus.dk"
 
-    jadt = orchestrator_connection.get_constant("balas").value
+    jadt = orchestrator_connection.get_constant("jadt").value
     balas = orchestrator_connection.get_constant("balas").value
-    VejArealMail = orchestrator_connection.get_constant("balas").value
+    VejArealMail = orchestrator_connection.get_constant("VejArealMail").value
 
     # Send Email
     if html_table.strip():
