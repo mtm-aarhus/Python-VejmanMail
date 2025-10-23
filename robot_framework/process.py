@@ -29,9 +29,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     # Custom Headers for Table (Order is enforced here)
     custom_headers = [
         ("case_id", "Sag"),
-        ("initials", "Behandler"),
-        ("state", "Status"),
-        ("type", "Ansøgning"),
         ("connected_case", "Relateret"),
         ("end_date", "Slutdato"),
         ("start_date", "Startdato"),
@@ -39,6 +36,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         ("rovm_equipment_type", "Udstyr"),
         ("applicant_folder_number", "Sagsmappenr"),
         ("authority_reference_number", "Kommentar"),
+        ("street_status", "Vejstatus"),
         ("street_name", "Vejnavn")
     ]
 
@@ -72,8 +70,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
             #Getting street number
             site = case_details.get('sites', [{}])[0]
-            print(site)
             building = site.get('building', {})
+            case["street_status"] = site.get('street_status', "")
 
             building_from = building.get('from')
             building_to = building.get('to')
