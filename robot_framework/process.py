@@ -158,19 +158,21 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     SMTP_PORT = 25
     SCREENSHOT_SENDER = "vejmanmail@aarhus.dk"
 
-    jadt = orchestrator_connection.get_constant("jadt").value
+    # jadt = orchestrator_connection.get_constant("jadt").value
     balas = orchestrator_connection.get_constant("balas").value
-    VejArealMail = orchestrator_connection.get_constant("VejArealMail").value
+    # VejArealMail = orchestrator_connection.get_constant("VejArealMail").value
 
     # Send Email
     if html_table.strip():
         msg = EmailMessage()
-        msg['To'] = VejArealMail
+        # msg['To'] = VejArealMail
+        msg['To'] = balas
         msg['From'] = SCREENSHOT_SENDER
         msg['Subject'] = "Daglig liste over tilladelser i Vejman"
         msg.set_content("Please enable HTML to view this message.")
         msg.add_alternative(html_table, subtype='html')
-        msg['Bcc'] = f'{balas}, {jadt}'
+        # msg['Bcc'] = f'{balas}, {jadt}'
+        msg['Bcc'] = balas
 
         try:
             with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
