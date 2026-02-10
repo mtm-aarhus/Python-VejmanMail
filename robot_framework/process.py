@@ -17,12 +17,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # URLs and headers
-    urls = [	f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=3&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&endDateFrom={yesterday}&endDateTo={today}&_=1715179724504&token={token}',
-        f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=8&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&&endDateFrom={yesterday}&endDateTo={today}&_=1715093019127&token={token}',
-        f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=3%2C6%2C8%2C12&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&startDateFrom={today}&startDateTo={today}&_=1715095095761&token={token}'
-        ]
 
+    # URLs and headers
+    urls = [	f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=3&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cmarker%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&endDateFrom={yesterday}&endDateTo={today}&_=1715179724504&token={token}',
+        f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=8&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cmarker%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&&endDateFrom={yesterday}&endDateTo={today}&_=1715093019127&token={token}',
+        f'https://vejman.vd.dk/permissions/getcases?pmCaseStates=3%2C6%2C8%2C12&pmCaseFields=state%2Ctype%2Ccase_number%2Cauthority_reference_number%2Cmarker%2Cwebgtno%2Cstart_date%2Cend_date%2Capplicant_folder_number%2Cconnected_case%2Cstreet_name%2Capplicant%2Crovm_equipment_type%2Cinitials&pmCaseWorker=all&pmCaseTypes=%27rovm%27%2C%27gt%27&pmCaseVariant=all&pmCaseTags=ignorerTags&pmCaseShowAttachments=false&dontincludemap=1&startDateFrom={today}&startDateTo={today}&_=1715095095761&token={token}'
+        ]
 
     headers = ["Udløbne tilladelser", "Færdigmeldte tilladelser", "Nye tilladelser"]
 
@@ -33,12 +33,14 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         ("end_date", "Slutdato"),
         ("start_date", "Startdato"),
         ("applicant", "Ansøger"),
+        ("marker", "Afmærkningsansvarlig"),
         ("rovm_equipment_type", "Udstyr"),
         ("applicant_folder_number", "Sagsmappenr"),
         ("authority_reference_number", "Kommentar"),
         ("street_status", "Vejstatus"),
         ("street_name", "Vejnavn")
     ]
+
 
     # Generate HTML Table
     html_table = ""
@@ -131,7 +133,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         # Populate rows
         for case in updated_cases:
-            print(case.get('sites'))
             case_id = case.get("case_id")
             case_number = case.get("case_number", "")
             case_roadnumber = case.get('building', "")
