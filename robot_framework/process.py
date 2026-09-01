@@ -69,9 +69,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             case_response = requests.get(f"https://vejman.vd.dk/permissions/getcase?caseid={case_id}&token={token}")
             case_response.raise_for_status()
             case_details = case_response.json().get("data", {})
-
             #Getting street number
-            site = case_details.get('sites', [{}])[0]
+            site = (case_details.get('sites') or [{}])[0]
             building = site.get('building', {})
             case["street_status"] = site.get('street_status', "")
 
