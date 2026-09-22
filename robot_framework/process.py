@@ -56,7 +56,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             continue
 
         # Filter cases by initials
-        filtered_cases = [case for case in cases if case.get("initials") in ["MAMASA", "LERV", "MABMO", "JKROG"]]
+        filtered_cases = [case for case in cases if case.get("initials") in ["MAMASA", "LERV", "MABMO", "JKROG", "MOJUS", "CWSL"]]
 
         # Fetch detailed case information and update start_date and end_date
         updated_cases = []
